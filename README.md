@@ -1,1 +1,1 @@
-# SlackFileUploader
+The SlackFileUploader project provides an intuitive frontend for users to easily upload files to a specified Slack workspace. It incorporates JavaScript to streamline interaction with the backend API, efficiently handling file uploads and offering real-time feedback on the upload status. This solution simplifies the process of sharing files on Slack, enhancing productivity and collaboration.
