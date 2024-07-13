@@ -1,48 +1,54 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-	"os"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
 
-	"github.com/joho/godotenv"
+    "github.com/joho/godotenv"
 )
 
 func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, continuing with environment variables")
-	}
+    // Load environment variables from .env file if present
+    if err := godotenv.Load(); err != nil {
+        log.Println("No .env file found, continuing with environment variables")
+    }
 }
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.Fatal("PORT must be set")
-	}
+    serverPort := os.Getenv("PORT")
+    if serverPort == "" {
+        log.Fatal("PORT must be set")
+    }
 
-	slackToken := os.Getenv("SLACK_TOKEN")
-	if slackToken == "" {
-		log.Fatal("SLACK_TOKEN must be set")
-	}
+    slackAPIKey := os.Getenv("SLACK_TOKEN")
+    if slackAPIKey == "" {
+        log.Fatal("SLACK_TOKEN must be set")
+    }
 
-	setupRoutes()
+    configureHTTPRoutes()
 
-	log.Printf("Starting server on port %s\n", port)
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+    log.Printf("Starting HTTP server on port %s\n", serverPort)
+    if err := http.ListenAndServe(fmt.Sprintf(":%s", serverPort), nil); err != nil {
+        log.Fatalf("Failed to start HTTP server: %v", err)
+    }
 }
 
-func setupRoutes() {
-	http.HandleFunc("/upload", handleFileUpload)
+// configureHTTPRoutes setups the URL routes for the HTTP server
+func configureHTTPRoutes() {
+    http.HandleFunc("/upload", handleSlackFileUpload)
 
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "OK")
-	})
+    http.HandleFunc("/health", healthCheckHandler)
 }
 
-func handleFileUpload(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "File upload endpoint")
+// handleSlackFileUpload processes file upload requests to Slack
+func handleSlackFileUpload(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintln(w, "Slack File Upload Endpoint")
+}
+
+// healthCheckHandler responds to health check requests
+func healthCheckHandler(w http.ResponseWriter, r *helpRequest) {
+    w.WriteHeader(http.StatusOK)
+    fmt.Fprintln(w, "OK")
 }
