@@ -38,26 +38,47 @@ func main() {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-    // Placeholder for login logic
-    // Note: Incorporate error checks as necessary for your login logic
+    // Implementation of login logic with error handling
+    // Example logic here, please replace with actual implementation
+    if _, err := w.Write([]byte("Login successful")); err != nil {
+        http.Error(w, "Failed to send response", http.StatusInternalServerError)
+        return
+    }
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-    // Placeholder for logout logic
-    // Note: Incorporate error checks as necessary for your logout logic
+    // Implementation of logout logic with error handling
+    // Example logic, please replace with actual implementation
+    if _, err := w.Write([]byte("Logout successful")); err != nil {
+        http.Error(w, "Failed to send response", http.StatusInternalServerError)
+        return
+    }
 }
 
 func FileUploadHandler(w http.ResponseWriter, r *http.Request) {
-    // Placeholder for file upload logic
-    // Note: Incorporate error checks as necessary for file upload logic
+    // Placeholder for file upload logic with improved error handling
     // Example:
-    // if err := r.ParseForm(); err != nil {
-    //     http.Error(w, "Failed to parse form", http.StatusBadRequest)
-    //     return
-    // }
+    if err := r.ParseMultipartForm(10 << 20); err != nil { // max 10 MB files
+        http.Error(w, "Failed to parse multipart form", http.StatusBadRequest)
+        return
+    }
+    // Add logic for file processing here
+
+    if _, err := w.Write([]byte("File uploaded successfully")); err != nil {
+        http.Error(w, "Failed to respond after file upload", http.StatusInternalServerError)
+        return
+    }
 }
 
 func UploadStatusHandler(w http.ResponseWriter, r *http.Request) {
-    // Placeholder for upload status logic
-    // Note: Incorporate error checks as necessary for upload status logic
+    // Placeholder for upload status logic with error handling
+    // Example:
+    vars := mux.Vars(r)
+    userID := vars["userID"]
+    // Implement logic to check status here based on userID
+
+    if _, err := w.Write([]byte("Status for userID: " + userID)); err != nil {
+        http.Error(w, "Failed to send response", http.StatusInternalServerError)
+        return
+    }
 }
