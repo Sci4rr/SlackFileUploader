@@ -1,21 +1,35 @@
-package models
+package main
 
 import (
+	"log"
+
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"github.com/my/project/models"
 )
 
-type User struct {
-	gorm.Model
-	Username string `gorm:"uniqueIndex;not null"`
-	Email    string `gorm:"uniqueIndex;not null"`
-	Files    []File `gorm:"foreignKey:UserID"`
-}
+func main() {
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to connect database: %v", err)
+	}
 
-type File struct {
-	gorm.Model
-	Name      string `gorm:"not null"`
-	Size      int64
-	Type      string
-	UserID    uint
-	UploadURL string
+	err = db.AutoMigrate(&models.User{}, &models.File{})
+	if err != nil {
+		log.Fatalf("failed to migrate database: %v", err)
+	}
+	
+	user := models.User{Username: "example", Email: "user@example.com"}
+	if result := db.Create(&user); result.Error != nil {
+		log.Printf("failed to create user: %v", result.Error)
+	}
+	
+	var file models.File
+	if result := db.First(&file, "name = ?", "example.txt"); result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			log.Printf("file not found: %v", result.Error)
+		} else {
+			log.Printf("failed to find file: %v", result.Error)
+		}
+	}
 }
