@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors" // Import added for error handling
 	"log"
 
 	"gorm.io/driver/sqlite"
