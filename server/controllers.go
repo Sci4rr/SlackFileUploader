@@ -37,42 +37,47 @@ func UploadFileToSlack(fileInfo FileInfo, fileBuffer *bytes.Buffer) (bool, error
 
 	part, err := writer.CreateFormFile("file", fileInfo.FileName)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("error creating form file: %w", err)
 	}
-	_, err = io.Copy(part, fileBuffer)
-	if err != nil {
-		return false, err
+	if _, err := io.Copy(part, fileBuffer); err != nil {
+		return false, fmt.Errorf("error copying file buffer: %w", err)
 	}
 
-	_ = writer.WriteField("channels", slackChannelID)
-	_ = writer.WriteField("filename", fileInfo.FileName)
-	_ = writer.WriteField("filetype", fileInfo.FileType)
-	_ = writer.WriteField("initial_comment", fileInfo.InitialComment)
-	_ = writer.WriteField("title", fileInfo.Title)
+	// Ensuring required fields are filled accurately 
+	fields := map[string]string{
+		"channels":        slackChannelID,
+		"filename":        fileInfo.FileName,
+		"filetype":        fileInfo.FileType,
+		"initial_comment": fileInfo.InitialComment,
+		"title":           fileInfo.Title,
+	}
+	for k, v := range fields {
+		if err := writer.WriteField(k, v); err != nil {
+			return false, fmt.Errorf("error writing field %s: %w", k, err)
+		}
+	}
 
-	err = writer.Close()
-	if err != nil {
-		return false, err
+	if err := writer.Close(); err != nil {
+		return false, fmt.Errorf("error closing writer: %w", err)
 	}
 
 	req, err := http.NewRequest("POST", SlackUploadAPI, body)
+	if err != nil {
+		return false, fmt.Errorf("error creating request: %w", err)
+	}
 	req.Header.Set("Authorization", "Bearer "+slackToken)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	if err != nil {
-		return false, err
-	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("error performing request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	var slackResp SlackResponse
 	if err := json.NewDecoder(resp.Body).Decode(&slackResp); err != nil {
-		return false, err
+		return false, fmt.Errorf("error decoding response: %w", err)
 	}
 
 	if !slackResp.OK {
