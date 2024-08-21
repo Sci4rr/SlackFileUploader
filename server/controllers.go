@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"sync"
 )
 
 const (
@@ -43,7 +44,6 @@ func UploadFileToSlack(fileInfo FileInfo, fileBuffer *bytes.Buffer) (bool, error
 		return false, fmt.Errorf("error copying file buffer: %w", err)
 	}
 
-	// Ensuring required fields are filled accurately 
 	fields := map[string]string{
 		"channels":        slackChannelID,
 		"filename":        fileInfo.FileName,
@@ -88,18 +88,29 @@ func UploadFileToSlack(fileInfo FileInfo, fileBuffer *bytes.Buffer) (bool, error
 }
 
 func main() {
-	fileInfo := FileInfo{
-		FileName:       "example.txt",
-		FileType:       "text",
-		Title:          "Example File",
-		InitialComment: "Here's the file you requested!",
+	fileInfos := []FileInfo{
+		{
+			FileName:       "example.txt",
+			FileType:       "text",
+			Title:          "Example File",
+			InitialComment: "Here's the file you requested!",
+		},
+		// Add more FileInfo structs to upload multiple files concurrently.
 	}
-	fileBuffer := bytes.NewBufferString("This is an example file content")
 
-	success, err := UploadFileToSlack(fileInfo, fileBuffer)
-	if !success || err != nil {
-		fmt.Printf("File upload failed: %v\n", err)
-	} else {
-		fmt.Println("File uploaded successfully.")
+	var wg sync.WaitGroup
+	for _, fileInfo := range fileInfos {
+		wg.Add(1)
+		go func(fileInfo FileInfo) {
+			defer wg.Done()
+			fileBuffer := bytes.NewBufferString("This is an example file content") // This should ideally be unique per file
+			success, err := UploadFileToSlack(fileInfo, fileBuffer)
+			if !success || err != nil {
+				fmt.Printf("File upload failed: %v\n", err)
+			} else {
+				fmt.Println("File uploaded successfully.")
+			}
+		}(fileInfo)
 	}
+	wg.Wait()
 }
