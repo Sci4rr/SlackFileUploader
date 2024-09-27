@@ -1,38 +1,32 @@
-package config
+package main
 
 import (
-	"log"
-	"os"
-
-	"github.com/joho/godotenv"
+    "sync"
+    "time"
 )
 
-type AppConfig struct {
-	DBConnectionString string
-	ServerPort         string
-	SlackClientID      string
-	SlackClientSecret  string
+func UploadFilesToSlack(files []YourFileType) {
+    var wg sync.WaitGroup
+    throttle := time.Tick(time.Second / SlackRateLimit)
+
+    for _, file := range files {
+        wg.Add(1)
+        go func(file YourFileType) {
+            defer wg.Done()
+            <-throttle
+            uploadFile(file)
+        }(file)
+    }
+    wg.Wait()
 }
 
-var Config AppConfig
-
-func LoadEnvironment() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	Config = AppConfig{
-		DBConnectionString: getEnv("DB_CONNECTION_STRING", ""),
-		ServerPort:         getEnv("SERVER_PORT", "8080"),
-		SlackClientID:      getEnv("SLACK_CLIENT_ID", ""),
-		SlackClientSecret:  getEnv("SLACK_CLIENT_SECRET", ""),
-	}
+func uploadFile(file YourFileType) {
 }
 
-func getEnv(key, fallback string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	return fallback
+type YourFileType struct {
+}
+
+func main() {
+    files := []YourFileType{}
+    UploadFilesToSlack(files)
 }
