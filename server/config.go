@@ -5,15 +5,19 @@ import (
     "time"
 )
 
+type YourFileType struct {
+}
+
 func UploadFilesToSlack(files []YourFileType) {
     var wg sync.WaitGroup
-    throttle := time.Tick(time.Second / SlackRateLimit)
+    throttle := time.NewTicker(time.Second / SlackRateLimit)
+    defer throttle.Stop()
 
     for _, file := range files {
         wg.Add(1)
         go func(file YourFileType) {
             defer wg.Done()
-            <-throttle
+            <-throttle.C
             uploadFile(file)
         }(file)
     }
@@ -21,9 +25,6 @@ func UploadFilesToSlack(files []YourFileType) {
 }
 
 func uploadFile(file YourFileType) {
-}
-
-type YourFileType struct {
 }
 
 func main() {
